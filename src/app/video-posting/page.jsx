@@ -11,10 +11,44 @@ import {
   FILE_SIZE_OVER_MSG,
   MAX_FILE_SIZE,
   FILE_TYPE_NOT_ALLOWED_MSG,
-} from "../../../utils/Common";
+} from "../../utils/Common";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const VideoPosting = () => {
   const [files, setFiles] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  let data = {
+    MOVIE_PATH: "testPath",
+    TITLE: title,
+    DESCRIPTION: description,
+  };
+  const uploadVideo = useCallback(() => {
+    fetch("http://localhost:8080/posting", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
+  }, []);
+
+  const inputTitle = useCallback(
+    (event) => {
+      setTitle(event.target.value);
+      console.log(title);
+    },
+    [title]
+  );
+
+  const inputDescription = useCallback(
+    (event) => {
+      setDescription(event.target.value);
+    },
+    [description]
+  );
 
   // 動画がポリシーに満たなかった場合
   const onDropRejected = useCallback((files) => {
@@ -64,12 +98,16 @@ const VideoPosting = () => {
           previewVideoElm.classList.remove("hidden");
           document.getElementById("notSelectedV").classList.add("hidden");
           document.getElementById("recordSoundBtn").classList.remove("hidden");
+          document.getElementById("fileName").classList.remove("hidden");
+          document.getElementById("titleField").classList.remove("hidden");
+          document
+            .getElementById("descriptionField")
+            .classList.remove("hidden");
         };
 
         reader.readAsDataURL(file);
       });
-      console.log(files);
-      setFiles(files[0]);
+      setFiles(files);
     }
   }, []);
 
@@ -146,10 +184,22 @@ const VideoPosting = () => {
           </li>
           <li className="mt-4">・動画は1つまでアップロード可能です。</li>
         </ul>
+        {/* ファイル名表示エリア */}
+        <div className="hidden mt-5 w-4/5 h-12 border rounded-xl">
+          <div
+            id="fileName"
+            className="w-[80%] leading-[48px] inline-block h-full pl-3"
+          ></div>
+          <div className="w-[20%] leading-[48px] h-full inline-block border-l text-center">
+            <button className="h-8 leading-8 pl-12 pr-12 rounded-xl text-white  bg-btn-common-col1">
+              削除
+            </button>
+          </div>
+        </div>
       </div>
       {/* 動画閲覧エリア */}
       <div className="w-3/6 text-center">
-        <div className="h-[400px] w-full">
+        <div className="h-[500px] w-full">
           <div
             id="notSelectedV"
             className="flex flex-col justify-center align-middle border-2 shadow-inner h-[400px] w-full"
@@ -163,16 +213,44 @@ const VideoPosting = () => {
           </div>
           <video
             id="previewVideo"
-            className="hidden transform scale-y-150"
+            className="max-w-full hidden"
             muted
             playsInline
           ></video>
+          <button
+            id="recordSoundBtn"
+            className="mt-6 hidden border-4 border-red-600 rounded-full p-2 transform"
+          >
+            <Image src={micIcon} alt="logo"></Image>
+          </button>
+          {/* タイトル */}
+          <div id="titleField" className="hidden mt-5 h-12">
+            <div className="flex justify-center items-center h-full">
+              <span className="text-red-600 whitespace-nowrap">[必須]</span>
+              <Input
+                onChange={(event) => inputTitle(event)}
+                className="inline-block h-full w-11/12 ml-3 mr-3"
+                placeholder="タイトルを入力してください..."
+              />
+            </div>
+          </div>
+          <div id="descriptionField" className="hidden mt-5 h-24">
+            <div className="flex justify-center items-center h-full">
+              <span className="text-gray-400 whitespace-nowrap">[任意]</span>
+              <Textarea
+                onChange={(event) => inputDescription(event)}
+                className="inline-block h-full w-11/12 ml-3 mr-3"
+                placeholder="説明文を入力してください..."
+              />
+            </div>
+          </div>
         </div>
         <button
-          id="recordSoundBtn"
-          className="hidden border-red-600 rounded-full p-2"
+          onClick={() => uploadVideo()}
+          className="border rounded-xl shadow-md text-white fixed bottom-[2%] right-[2%] w-40 h-11 bg-btn-common-col2"
+          id="videoPosting"
         >
-          <Image src={micIcon} alt="logo"></Image>
+          投稿する
         </button>
       </div>
     </div>
