@@ -1,24 +1,31 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import filupIcon from "../../../public/icons/ph_file-video-thin.png";
 import helpIcon from "../../../public/icons/help.png";
 import micIcon from "../../../public/icons/mic-record.png";
+import stopIcon from "../../../public/icons/stopIcon.png";
 import fileErrIcon from "../../../public/icons/file-error.png";
 import noVide from "../../../public/icons/no-video.png";
 import {
   FILE_SIZE_OVER_MSG,
   MAX_FILE_SIZE,
   FILE_TYPE_NOT_ALLOWED_MSG,
-} from "../../utils/Common";
+} from "../../utils/CommonConstants";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ENDPOINT_VALUE } from "../../utils/CommonConstants";
 
 const VideoPosting = () => {
-  const [files, setFiles] = useState("");
+  const [movieFile, setMovieFile] = useState(""); // 動画ファイル
+  const [audioFile, setAudioFile] = useState(""); // 音声ファイル
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
+
+  const audioRef = useRef();
+  const mediaRecorderRef = useRef();
 
   let data = {
     MOVIE_PATH: "testPath",
@@ -26,7 +33,7 @@ const VideoPosting = () => {
     DESCRIPTION: description,
   };
   const uploadVideo = useCallback(() => {
-    fetch("http://localhost:8080/posting", {
+    fetch(ENDPOINT_VALUE + "posting", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -77,6 +84,60 @@ const VideoPosting = () => {
     });
   });
 
+  useEffect(() => {
+    // マイクへのアクセス権を取得
+    navigator.getUserMedia =
+      navigator.getUserMedia || navigator.webkitGetUserMedia;
+
+    navigator.getUserMedia(
+      {
+        audio: true,
+        video: false,
+      },
+      handleSuccess,
+      hancleError
+    );
+  }, []);
+
+  const handleSuccess = (stream) => {
+    // レコーディングのインスタンスを作成
+    mediaRecorderRef.current = new MediaRecorder(stream, {
+      mimeType: "video/webm;codecs=vp9",
+    });
+
+    let chunks = [];
+
+    mediaRecorderRef.current.addEventListener("dataavailable", (ele) => {
+      if (ele.data.size > 0) {
+        chunks.push(ele.data); // 音声データを格納
+      }
+    });
+
+    mediaRecorderRef.current.addEventListener("stop", () => {
+      const audioBlob = new Blob(chunks, { type: "audio/wav" }); // wav形式に変換
+      const audioUrl = URL.createObjectURL(audioBlob);
+      audioRef.current.src = audioUrl;
+      setAudioFile(audioUrl);
+      chunks = [];
+    });
+  };
+
+  const hancleError = () => {
+    alert("エラーです。");
+  };
+
+  // 録音開始
+  const startRecording = () => {
+    setIsRecording(true);
+    mediaRecorderRef.current.start();
+  };
+
+  // 録音停止
+  const stopRecording = () => {
+    setIsRecording(false);
+    mediaRecorderRef.current.stop();
+  };
+
   // 動画がドロップされたとき
   const onDrop = useCallback((files) => {
     if (files.length > 0) {
@@ -97,7 +158,7 @@ const VideoPosting = () => {
           previewVideoElm.src = reader.result;
           previewVideoElm.classList.remove("hidden");
           document.getElementById("notSelectedV").classList.add("hidden");
-          document.getElementById("recordSoundBtn").classList.remove("hidden");
+          document.getElementById("recordAudioBtn").classList.remove("hidden");
           document.getElementById("fileName").classList.remove("hidden");
           document.getElementById("titleField").classList.remove("hidden");
           document
@@ -107,7 +168,7 @@ const VideoPosting = () => {
 
         reader.readAsDataURL(file);
       });
-      setFiles(files);
+      setMovieFile(files);
     }
   }, []);
 
@@ -217,12 +278,24 @@ const VideoPosting = () => {
             muted
             playsInline
           ></video>
-          <button
-            id="recordSoundBtn"
-            className="mt-6 hidden border-4 border-red-600 rounded-full p-2 transform"
-          >
-            <Image src={micIcon} alt="logo"></Image>
-          </button>
+          <audio className="hidden" ref={audioRef} controls id="audio"></audio>
+          {isRecording ? (
+            <button
+              id="stopAudioBtn"
+              onClick={() => stopRecording()}
+              className="mt-6 hidden border-4 border-red-600 rounded-full p-2 transform"
+            >
+              <Image src={stopIcon} alt="rogo"></Image>
+            </button>
+          ) : (
+            <button
+              id="recordAudioBtn"
+              onClick={() => startRecording()}
+              className="mt-6 hidden border-4 border-red-600 rounded-full p-2 transform"
+            >
+              <Image src={micIcon} alt="rogo"></Image>
+            </button>
+          )}
           {/* タイトル */}
           <div id="titleField" className="hidden mt-5 h-12">
             <div className="flex justify-center items-center h-full">
