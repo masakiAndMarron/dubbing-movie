@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useCallback, useState } from "react";
 import { ENDPOINT_VALUE } from "@/utils/CommonConstants";
+import Error from "next/error";
 
 const SignUp = () => {
   const [mailaddress, setMailAddress] = useState("");
@@ -40,6 +41,9 @@ const SignUp = () => {
       })
       .then((data) => {
         setErrorMsg(data["validMsg"]);
+        if (data.apiCode === "0") {
+          throw new Error("エラー");
+        }
         console.log(data);
       })
       .catch((error) => {});
@@ -50,7 +54,7 @@ const SignUp = () => {
       <div className="bg-content-bg-col w-96 h-[580px] border">
         {errorMsg.length !== 0 && (
           <div className="flex justify-center">
-            <ul className="pb-1 w-11/12 mt-3 mb-3 rounded border-2 border-l-8 border-red-400 bg-error-field-col">
+            <ul className="w-11/12 mt-3 mb-3 rounded border-2 border-l-8 border-red-400 bg-error-field-col">
               {errorMsg.map((msg, index) => {
                 return (
                   <li
