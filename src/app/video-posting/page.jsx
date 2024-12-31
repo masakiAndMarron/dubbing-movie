@@ -27,25 +27,24 @@ const VideoPosting = () => {
   const audioRef = useRef();
   const mediaRecorderRef = useRef();
 
-  let data = {
-    MOVIE_PATH: "testPath",
-    TITLE: title,
-    DESCRIPTION: description,
-  };
   const uploadVideo = useCallback(() => {
+    const formData = new FormData();
+    formData.append("movieFile", movieFile[0]);
+    formData.append("movieSoundFile", audioFile);
+    formData.append("title", title);
+    formData.append("description", description);
+    for (let value of formData.entries()) {
+      console.log(value);
+    }
     fetch(ENDPOINT_VALUE + "posting", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
+      body: formData,
     });
-  }, []);
+  });
 
   const inputTitle = useCallback(
     (event) => {
       setTitle(event.target.value);
-      console.log(title);
     },
     [title]
   );
@@ -140,6 +139,7 @@ const VideoPosting = () => {
 
   // 動画がドロップされたとき
   const onDrop = useCallback((files) => {
+    setMovieFile(files);
     if (files.length > 0) {
       files.forEach((file) => {
         const reader = new FileReader();
@@ -149,7 +149,7 @@ const VideoPosting = () => {
         // ファイルの読み取りが失敗
         reader.onerror = () => {};
 
-        // ファイルの読み取りがされた場合
+        // ファイルの読み取りが完了した場合
         reader.onload = () => {
           // エラーメッセージフィールドを非表示
           const msgElm = document.getElementById("file-err-msg");
@@ -164,11 +164,13 @@ const VideoPosting = () => {
           document
             .getElementById("descriptionField")
             .classList.remove("hidden");
-        };
 
+          let dataUrl = reader.result;
+          // DataUriをBASE64形式で保存
+          // setMovieFile(dataUrl.replace(/^data:\w+\/\w+;base64,/, ""));
+        };
         reader.readAsDataURL(file);
       });
-      setMovieFile(files);
     }
   }, []);
 
