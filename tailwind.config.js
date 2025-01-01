@@ -7,6 +7,7 @@ module.exports = {
       colors: {
         "file-up-border-col": "#9CB3C8",
         "error-field-col": "rgba(255,0,0,0.1)",
+        "success-field-col": "rgba(0,255,0,0.1)",
         "file-up-bg": "rgba(236,239,255,0.4)",
         "btn-common-col1": "#5BA7FF", // 登録等 青色
         "text-sub-col": "#9B9B9B",

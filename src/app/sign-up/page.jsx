@@ -1,7 +1,7 @@
 "use client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ENDPOINT_VALUE } from "@/utils/CommonConstants";
 import Error from "next/error";
 
@@ -10,6 +10,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState([]);
+  const successMsgRef = useRef();
 
   const inputMailaddress = useCallback((event) => {
     setMailAddress(event.target.value);
@@ -40,9 +41,16 @@ const SignUp = () => {
         return res.json();
       })
       .then((data) => {
-        setErrorMsg(data["validMsg"]);
+        let msg = data["validMsg"];
+
+        if (msg != null) {
+          return setErrorMsg(data["validMsg"]);
+        }
         if (data.apiCode === "0") {
           throw new Error("エラー");
+        } else {
+          setErrorMsg([]);
+          successMsgRef.current.classList.remove("hidden");
         }
         console.log(data);
       })
@@ -52,8 +60,16 @@ const SignUp = () => {
   return (
     <div className="absolute top-2/4 left-2/4 transform -translate-x-1/2 -translate-y-2/4">
       <div className="bg-content-bg-col w-96 h-[580px] border">
-        {errorMsg.length !== 0 && (
-          <div className="flex justify-center">
+        <div className="flex justify-center">
+          <ul
+            ref={successMsgRef}
+            className="hidden w-11/12 mt-3 mb-3 rounded border-2 border-l-8 border-green-400 bg-success-field-col"
+          >
+            <li className="ml-1 mt-1 mb-1 text-sm text-green-600">
+              メール送信が完了しました。
+            </li>
+          </ul>
+          {errorMsg.length !== 0 && (
             <ul className="w-11/12 mt-3 mb-3 rounded border-2 border-l-8 border-red-400 bg-error-field-col">
               {errorMsg.map((msg, index) => {
                 return (
@@ -66,8 +82,8 @@ const SignUp = () => {
                 );
               })}
             </ul>
-          </div>
-        )}
+          )}
+        </div>
         <div
           className={`w-72 m-[auto] ${
             errorMsg.length !== 0 ? "mt-8" : "mt-28"
