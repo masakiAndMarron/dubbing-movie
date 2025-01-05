@@ -33,9 +33,6 @@ const VideoPosting = () => {
     formData.append("movieSoundFile", audioFile);
     formData.append("title", title);
     formData.append("description", description);
-    for (let value of formData.entries()) {
-      console.log(value);
-    }
     fetch(ENDPOINT_VALUE + "posting", {
       method: "POST",
       body: formData,
